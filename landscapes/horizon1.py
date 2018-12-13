@@ -92,8 +92,6 @@ def main():
     yellow = (255, 232, 0)
 
     solid = init_solid(WIDTH, HEIGHT, blue)
-    save_image('solid.png', solid)
-
 
     (top, bottom) = np.split(solid, 2)
 
