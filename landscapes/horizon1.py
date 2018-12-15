@@ -72,7 +72,7 @@ def horizon_scaling(shape):
     (height, width, depth) = shape
 
     # make random cutoffs
-    rands = smooth_rands(width, .80, .85, .002)
+    rands = smooth_rands(width, .80, .85, .01)
     cutoff = np.tile(rands, height).reshape(height, width)
 
     # smooth gradient indexes
@@ -85,11 +85,11 @@ def horizon_scaling(shape):
     cur[inactive] = cutoff[inactive]
 
     # create the scaling
-    return ((cur - cutoff) ** 3) / ((total - cutoff) ** 3)
+    return ((cur - cutoff) ** 1) / ((total - cutoff) ** 1)
 
 def main():
-    blue = (0, 65, 171)
-    yellow = (255, 232, 0)
+    blue = (75, 0, 130)
+    yellow = (148, 0, 211)
 
     solid = init_solid(WIDTH, HEIGHT, blue)
 
