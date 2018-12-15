@@ -46,10 +46,6 @@ def bitangent(x0, y0, r0, x1, y1, r1, inner):
         'c1y1': (r1**2 * (yp - y1) + r1 * (xp - x1) * root1) / denom1 + y1,
     }
 
-
-
-    return result
-
 def main():
     """
     http://www.dazeddigital.com/music/article/34849/1/aphex-twin-logo-designer-posts-early-blueprints-on-instagram
