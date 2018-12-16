@@ -107,73 +107,85 @@ def bitangent(c0, c1, side0, side1):
     root1 = root_part(xp, yp, c1.x, c1.y, c1.r)
     denom1 = denom_part(xp, yp, c1.x, c1.y)
 
-    if side0 == LEFT:
+    if side0 == LEFT and c0.r > c1.r:
         return Segment(
             (c0.r**2 * (xp - c0.x) + c0.r * (yp - c0.y) * root0) / denom0 + c0.x,
             (c0.r**2 * (yp - c0.y) - c0.r * (xp - c0.x) * root0) / denom0 + c0.y,
             (c1.r**2 * (xp - c1.x) + c1.r * (yp - c1.y) * root1) / denom1 + c1.x,
             (c1.r**2 * (yp - c1.y) - c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
         )
-    else:
+    elif side0 == LEFT and c0.r <= c1.r:
         return Segment(
             (c0.r**2 * (xp - c0.x) - c0.r * (yp - c0.y) * root0) / denom0 + c0.x,
             (c0.r**2 * (yp - c0.y) + c0.r * (xp - c0.x) * root0) / denom0 + c0.y,
             (c1.r**2 * (xp - c1.x) - c1.r * (yp - c1.y) * root1) / denom1 + c1.x,
             (c1.r**2 * (yp - c1.y) + c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
         )
+    elif side0 == RIGHT and c0.r > c1.r:
+        return Segment(
+            (c0.r**2 * (xp - c0.x) - c0.r * (yp - c0.y) * root0) / denom0 + c0.x,
+            (c0.r**2 * (yp - c0.y) + c0.r * (xp - c0.x) * root0) / denom0 + c0.y,
+            (c1.r**2 * (xp - c1.x) - c1.r * (yp - c1.y) * root1) / denom1 + c1.x,
+            (c1.r**2 * (yp - c1.y) + c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
+        )
+    elif side0 == RIGHT and c0.r <= c1.r:
+        return Segment(
+            (c0.r**2 * (xp - c0.x) + c0.r * (yp - c0.y) * root0) / denom0 + c0.x,
+            (c0.r**2 * (yp - c0.y) - c0.r * (xp - c0.x) * root0) / denom0 + c0.y,
+            (c1.r**2 * (xp - c1.x) + c1.r * (yp - c1.y) * root1) / denom1 + c1.x,
+            (c1.r**2 * (yp - c1.y) - c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
+        )
 
 
 def main():
     """
     http://www.dazeddigital.com/music/article/34849/1/aphex-twin-logo-designer-posts-early-blueprints-on-instagram
-
-    next steps:
-    - create namedtuples for circles and tangents
-    - figure out which tangent we want in any given circumstance and only
-      ask for/receive it (lefts and rights are arbitrary right now)
     """
     dwg = svgwrite.Drawing('aphex.svg', profile='tiny')
-    circles = [
-        Circle(100, 100, 50),
-        Circle(300, 100, 50),
-        Circle(300, 300, 50),
-    ]
-    for c in circles:
+    c0 = Circle(100, 100, 50)
+    c1 = Circle(300, 300, 25)
+    c2 = Circle(500, 100, 50)
+    c3 = Circle(700, 300, 25)
+    c4 = Circle(900, 100, 25)
+    c5 = Circle(1100, 300, 50)
+
+    for c in [c0, c1, c2, c3, c4, c5]:
         dwg.add(dwg.circle((c.x, c.y), c.r, stroke='green', fill='white'))
 
 
-    left_left = bitangent(circles[0], circles[2], LEFT, LEFT)
-    left_right = bitangent(circles[0], circles[2], LEFT, RIGHT)
-    right_left = bitangent(circles[0], circles[2], RIGHT, LEFT)
-    right_right = bitangent(circles[0], circles[2], RIGHT, RIGHT)
-    dwg.add(
-        dwg.line(
-            (left_left.x0, left_left.y0),
-            (left_left.x1, left_left.y1),
-            stroke='red'
+    for (ca, cb) in [(c0, c1), (c3, c2), (c4, c5)]:
+        left_left = bitangent(ca, cb, LEFT, LEFT)
+        left_right = bitangent(ca, cb, LEFT, RIGHT)
+        right_left = bitangent(ca, cb, RIGHT, LEFT)
+        right_right = bitangent(ca, cb, RIGHT, RIGHT)
+        dwg.add(
+            dwg.line(
+                (left_left.x0, left_left.y0),
+                (left_left.x1, left_left.y1),
+                stroke='red'
+            )
         )
-    )
-    dwg.add(
-        dwg.line(
-            (left_right.x0, left_right.y0),
-            (left_right.x1, left_right.y1),
-            stroke='red'
+        dwg.add(
+            dwg.line(
+                (left_right.x0, left_right.y0),
+                (left_right.x1, left_right.y1),
+                stroke='red'
+            )
         )
-    )
-    dwg.add(
-        dwg.line(
-            (right_left.x0, right_left.y0),
-            (right_left.x1, right_left.y1),
-            stroke='blue'
+        dwg.add(
+            dwg.line(
+                (right_left.x0, right_left.y0),
+                (right_left.x1, right_left.y1),
+                stroke='blue'
+            )
         )
-    )
-    dwg.add(
-        dwg.line(
-            (right_right.x0, right_right.y0),
-            (right_right.x1, right_right.y1),
-            stroke='blue'
+        dwg.add(
+            dwg.line(
+                (right_right.x0, right_right.y0),
+                (right_right.x1, right_right.y1),
+                stroke='blue'
+            )
         )
-    )
 
     dwg.save()
 
