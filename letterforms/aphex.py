@@ -1,7 +1,11 @@
+import collections
 import math
 import unittest
 
 import svgwrite
+
+Circle = collections.namedtuple('Circle', ['x', 'y', 'r'])
+BiTangent = collections.namedtuple('Tangent', ['x0', 'y0', 'x1', 'y1'])
 
 def root_part(xp, yp, x, y, r):
     return math.sqrt((xp - x)**2 + (yp - y)**2 - r**2)
@@ -77,7 +81,7 @@ def parallel_tangents(x0, y0, x1, y1, r):
         'c1y1': c1t1[1],
     }
 
-def bitangent(x0, y0, r0, x1, y1, r1, inner):
+def bitangent(c0, c1, inner):
     """
     Calculates the four inner or outer bitangent points between two circles
     defined by their center points and radiuses. See the unit tests for
@@ -89,31 +93,31 @@ def bitangent(x0, y0, r0, x1, y1, r1, inner):
 
     # if we're doing outer tangents and the circles are the same size we need
     # to use a special method
-    if not inner and r0 == r1:
-        return parallel_tangents(x0, y0, x1, y1, r0)
+    if not inner and c0.r == c1.r:
+        return parallel_tangents(c0.x, c0.y, c1.x, c1.y, c0.r)
 
     if inner:
-        xp = ((x1 * r0) + (x0 * r1)) / (r0 + r1)
-        yp = ((y1 * r0) + (y0 * r1)) / (r0 + r1)
+        xp = ((c1.x * c0.r) + (c0.x * c1.r)) / (c0.r + c1.r)
+        yp = ((c1.y * c0.r) + (c0.y * c1.r)) / (c0.r + c1.r)
     else:
-        xp = ((x1 * r0) - (x0 * r1)) / (r0 - r1)
-        yp = ((y1 * r0) - (y0 * r1)) / (r0 - r1)
+        xp = ((c1.x * c0.r) - (c0.x * c1.r)) / (c0.r - c1.r)
+        yp = ((c1.y * c0.r) - (c0.y * c1.r)) / (c0.r - c1.r)
 
-    root0 = root_part(xp, yp, x0, y0, r0)
-    denom0 = denom_part(xp, yp, x0, y0)
-    root1 = root_part(xp, yp, x1, y1, r1)
-    denom1 = denom_part(xp, yp, x1, y1)
+    root0 = root_part(xp, yp, c0.x, c0.y, c0.r)
+    denom0 = denom_part(xp, yp, c0.x, c0.y)
+    root1 = root_part(xp, yp, c1.x, c1.y, c1.r)
+    denom1 = denom_part(xp, yp, c1.x, c1.y)
 
     return {
-        'c0x0': (r0**2 * (xp - x0) + r0 * (yp - y0) * root0) / denom0 + x0,
-        'c0y0': (r0**2 * (yp - y0) - r0 * (xp - x0) * root0) / denom0 + y0,
-        'c0x1': (r0**2 * (xp - x0) - r0 * (yp - y0) * root0) / denom0 + x0,
-        'c0y1': (r0**2 * (yp - y0) + r0 * (xp - x0) * root0) / denom0 + y0,
+        'c0x0': (c0.r**2 * (xp - c0.x) + c0.r * (yp - c0.y) * root0) / denom0 + c0.x,
+        'c0y0': (c0.r**2 * (yp - c0.y) - c0.r * (xp - c0.x) * root0) / denom0 + c0.y,
+        'c0x1': (c0.r**2 * (xp - c0.x) - c0.r * (yp - c0.y) * root0) / denom0 + c0.x,
+        'c0y1': (c0.r**2 * (yp - c0.y) + c0.r * (xp - c0.x) * root0) / denom0 + c0.y,
 
-        'c1x0': (r1**2 * (xp - x1) + r1 * (yp - y1) * root1) / denom1 + x1,
-        'c1y0': (r1**2 * (yp - y1) - r1 * (xp - x1) * root1) / denom1 + y1,
-        'c1x1': (r1**2 * (xp - x1) - r1 * (yp - y1) * root1) / denom1 + x1,
-        'c1y1': (r1**2 * (yp - y1) + r1 * (xp - x1) * root1) / denom1 + y1,
+        'c1x0': (c1.r**2 * (xp - c1.x) + c1.r * (yp - c1.y) * root1) / denom1 + c1.x,
+        'c1y0': (c1.r**2 * (yp - c1.y) - c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
+        'c1x1': (c1.r**2 * (xp - c1.x) - c1.r * (yp - c1.y) * root1) / denom1 + c1.x,
+        'c1y1': (c1.r**2 * (yp - c1.y) + c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
     }
 
 def main():
@@ -127,16 +131,16 @@ def main():
     """
     dwg = svgwrite.Drawing('aphex.svg', profile='tiny')
     circles = [
-        (100, 100, 50),
-        (300, 100, 50),
-        (300, 300, 50),
+        Circle(100, 100, 50),
+        Circle(300, 100, 50),
+        Circle(300, 300, 50),
     ]
     for c in circles:
-        dwg.add(dwg.circle((c[0], c[1]), c[2], stroke='green', fill='white'))
+        dwg.add(dwg.circle((c.x, c.y), c.r, stroke='green', fill='white'))
 
 
-    o = bitangent(100, 100, 50, 300, 300, 50, False)
-    i = bitangent(100, 100, 50, 300, 300, 50, True)
+    o = bitangent(circles[0], circles[2], False)
+    i = bitangent(circles[0], circles[2], True)
     dwg.add(
         dwg.line((o['c0x0'], o['c0y0']), (o['c1x0'], o['c1y0']), stroke='blue')
     )

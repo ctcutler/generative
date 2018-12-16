@@ -5,7 +5,9 @@ import aphex
 
 class BitangentTest(unittest.TestCase):
     def test_inner(self):
-        result = aphex.bitangent(0, 0, 4, 5, 5, 3, True)
+        c0 = aphex.Circle(0, 0, 4)
+        c1 = aphex.Circle(5, 5, 3)
+        result = aphex.bitangent(c0, c1, True)
         expected = {
             'c0x0': 3.2,
             'c0y0': 2.4,
@@ -19,7 +21,9 @@ class BitangentTest(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_outer(self):
-        result = aphex.bitangent(0, 0, 4, 5, 5, 3, False)
+        c0 = aphex.Circle(0, 0, 4)
+        c1 = aphex.Circle(5, 5, 3)
+        result = aphex.bitangent(c0, c1, False)
         expected = {
             'c0x0': 3.2,
             'c0y0': -2.4,
@@ -33,7 +37,9 @@ class BitangentTest(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_outer_same_r(self):
-        result = aphex.bitangent(0, 0, 2, 5, 5, 2, False)
+        c0 = aphex.Circle(0, 0, 2)
+        c1 = aphex.Circle(5, 5, 2)
+        result = aphex.bitangent(c0, c1, False)
         expected = {
             'c0x0': 1.414213562373095,
             'c0y0': -1.414213562373095,
