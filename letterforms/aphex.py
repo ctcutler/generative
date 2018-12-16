@@ -6,12 +6,8 @@ import svgwrite
 
 Circle = collections.namedtuple('Circle', ['x', 'y', 'r'])
 Segment = collections.namedtuple('Segment', ['x0', 'y0', 'x1', 'y1'])
-
-def root_part(xp, yp, x, y, r):
-    return math.sqrt((xp - x)**2 + (yp - y)**2 - r**2)
-
-def denom_part(xp, yp, x, y):
-    return (xp - x)**2 + (yp - y)**2
+LEFT = 'left'
+RIGHT = 'right'
 
 def norm_v(v):
     magnitude = math.sqrt(v[0]**2 + v[1]**2)
@@ -32,7 +28,7 @@ def add_v(v1, v2):
 def sub_v(v1, v2):
     return (v1[0] - v2[0], v1[1] - v2[1])
 
-def parallel_tangent(center_v1, center_v2, r, cw):
+def parallel_tangent_point(center_v1, center_v2, r, cw):
     """
     Method for handling circles of the same size based on this Stack Overflow:
     https://math.stackexchange.com/q/175906
@@ -61,60 +57,71 @@ def parallel_tangent(center_v1, center_v2, r, cw):
     # add to "from" circle center
     return add_v(scaled, center_v1)
 
-def parallel_tangents(x0, y0, x1, y1, r):
-    center0 = (x0, y0)
-    center1 = (x1, y1)
-    c0t0 = parallel_tangent(center0, center1, r, False)
-    c0t1 = parallel_tangent(center0, center1, r, True)
-    c1t0 = parallel_tangent(center1, center0, r, True)
-    c1t1 = parallel_tangent(center1, center0, r, False)
-
-    return {
-        'left': Segment(c0t0[0], c0t0[1], c1t0[0], c1t0[1]),
-        'right': Segment(c0t1[0], c0t1[1], c1t1[0], c1t1[1]),
-    }
-
-def bitangent(c0, c1, inner):
+def parallel_tangent(c0, c1, side):
     """
-    Calculates the four inner or outer bitangent points between two circles
-    defined by their center points and radiuses. See the unit tests for
-    examples.
-
-    Based on math found here:
-    http://www.ambrsoft.com/TrigoCalc/Circles2/Circles2Tangent_.htm
+    Called when the circles have the same radius and the tangent does
+    not cross over (so only one side value is needed).
     """
+    center0 = (c0.x, c0.y)
+    center1 = (c1.x, c1.y)
 
-    # if we're doing outer tangents and the circles are the same size we need
-    # to use a special method
-    if not inner and c0.r == c1.r:
-        return parallel_tangents(c0.x, c0.y, c1.x, c1.y, c0.r)
-
-    if inner:
-        xp = ((c1.x * c0.r) + (c0.x * c1.r)) / (c0.r + c1.r)
-        yp = ((c1.y * c0.r) + (c0.y * c1.r)) / (c0.r + c1.r)
+    if side == LEFT:
+        pt0 = parallel_tangent_point(center0, center1, c0.r, False)
+        pt1 = parallel_tangent_point(center1, center0, c0.r, True)
     else:
+        pt0 = parallel_tangent_point(center0, center1, c0.r, True)
+        pt1 = parallel_tangent_point(center1, center0, c0.r, False)
+
+    return Segment(pt0[0], pt0[1], pt1[0], pt1[1])
+
+def bitangent(c0, c1, side0, side1):
+    """
+    Calculates a tangent between circles c0 and c1.  side0 and side1 specify
+    which side (LEFT or RIGHT) of c0 and c1 the tangent attaches to.  (LEFT
+    and RIGHT from the perspective of c0 looking toward c1.)
+    """
+
+    # if we're not crossing over and the circles are the same size we need
+    # to use a special method
+    if side0 == side1 and c0.r == c1.r:
+        return parallel_tangent(c0, c1, side0)
+
+    # The following is based on math found here:
+    # http://www.ambrsoft.com/TrigoCalc/Circles2/Circles2Tangent_.htm
+
+    if side0 == side1:
         xp = ((c1.x * c0.r) - (c0.x * c1.r)) / (c0.r - c1.r)
         yp = ((c1.y * c0.r) - (c0.y * c1.r)) / (c0.r - c1.r)
+    else:
+        xp = ((c1.x * c0.r) + (c0.x * c1.r)) / (c0.r + c1.r)
+        yp = ((c1.y * c0.r) + (c0.y * c1.r)) / (c0.r + c1.r)
+
+    def root_part(xp, yp, x, y, r):
+        return math.sqrt((xp - x)**2 + (yp - y)**2 - r**2)
+
+    def denom_part(xp, yp, x, y):
+        return (xp - x)**2 + (yp - y)**2
 
     root0 = root_part(xp, yp, c0.x, c0.y, c0.r)
     denom0 = denom_part(xp, yp, c0.x, c0.y)
     root1 = root_part(xp, yp, c1.x, c1.y, c1.r)
     denom1 = denom_part(xp, yp, c1.x, c1.y)
 
-    return {
-        'left': Segment(
+    if side0 == LEFT:
+        return Segment(
             (c0.r**2 * (xp - c0.x) + c0.r * (yp - c0.y) * root0) / denom0 + c0.x,
             (c0.r**2 * (yp - c0.y) - c0.r * (xp - c0.x) * root0) / denom0 + c0.y,
             (c1.r**2 * (xp - c1.x) + c1.r * (yp - c1.y) * root1) / denom1 + c1.x,
             (c1.r**2 * (yp - c1.y) - c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
-        ),
-        'right': Segment(
+        )
+    else:
+        return Segment(
             (c0.r**2 * (xp - c0.x) - c0.r * (yp - c0.y) * root0) / denom0 + c0.x,
             (c0.r**2 * (yp - c0.y) + c0.r * (xp - c0.x) * root0) / denom0 + c0.y,
             (c1.r**2 * (xp - c1.x) - c1.r * (yp - c1.y) * root1) / denom1 + c1.x,
             (c1.r**2 * (yp - c1.y) + c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
-        ),
-    }
+        )
+
 
 def main():
     """
@@ -135,37 +142,35 @@ def main():
         dwg.add(dwg.circle((c.x, c.y), c.r, stroke='green', fill='white'))
 
 
-    o = bitangent(circles[0], circles[2], False)
-    i = bitangent(circles[0], circles[2], True)
-    o_left = o['left']
-    o_right = o['right']
+    left_left = bitangent(circles[0], circles[2], LEFT, LEFT)
+    left_right = bitangent(circles[0], circles[2], LEFT, RIGHT)
+    right_left = bitangent(circles[0], circles[2], RIGHT, LEFT)
+    right_right = bitangent(circles[0], circles[2], RIGHT, RIGHT)
     dwg.add(
         dwg.line(
-            (o_left.x0, o_left.y0),
-            (o_left.x1, o_left.y1),
+            (left_left.x0, left_left.y0),
+            (left_left.x1, left_left.y1),
+            stroke='red'
+        )
+    )
+    dwg.add(
+        dwg.line(
+            (left_right.x0, left_right.y0),
+            (left_right.x1, left_right.y1),
+            stroke='red'
+        )
+    )
+    dwg.add(
+        dwg.line(
+            (right_left.x0, right_left.y0),
+            (right_left.x1, right_left.y1),
             stroke='blue'
         )
     )
     dwg.add(
         dwg.line(
-            (o_right.x0, o_right.y0),
-            (o_right.x1, o_right.y1),
-            stroke='blue'
-        )
-    )
-    i_left = i['left']
-    i_right = i['right']
-    dwg.add(
-        dwg.line(
-            (i_left.x0, i_left.y0),
-            (i_left.x1, i_left.y1),
-            stroke='blue'
-        )
-    )
-    dwg.add(
-        dwg.line(
-            (i_right.x0, i_right.y0),
-            (i_right.x1, i_right.y1),
+            (right_right.x0, right_right.y0),
+            (right_right.x1, right_right.y1),
             stroke='blue'
         )
     )
