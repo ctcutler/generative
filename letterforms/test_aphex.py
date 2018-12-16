@@ -9,14 +9,16 @@ class BitangentTest(unittest.TestCase):
         c1 = aphex.Circle(5, 5, 3)
         result = aphex.bitangent(c0, c1, True)
         expected = {
-            'c0x0': 3.2,
-            'c0y0': 2.4,
-            'c0x1': 2.4,
-            'c0y1': 3.2,
-            'c1x0': 2.600000000000001,
-            'c1y0': 3.1999999999999993,
-            'c1x1': 3.1999999999999993,
-            'c1y1': 2.600000000000001,
+            'left': aphex.Segment(
+                3.2, 2.4,
+                2.600000000000001,
+                3.1999999999999993,
+            ),
+            'right': aphex.Segment(
+                2.4, 3.2,
+                3.1999999999999993,
+                2.600000000000001
+            ),
         }
         self.assertEqual(result, expected)
 
@@ -25,14 +27,8 @@ class BitangentTest(unittest.TestCase):
         c1 = aphex.Circle(5, 5, 3)
         result = aphex.bitangent(c0, c1, False)
         expected = {
-            'c0x0': 3.2,
-            'c0y0': -2.4,
-            'c0x1': -2.4,
-            'c0y1': 3.2,
-            'c1x0': 7.4,
-            'c1y0': 3.2,
-            'c1x1': 3.2,
-            'c1y1': 7.4,
+            'left': aphex.Segment(3.2, -2.4, 7.4, 3.2),
+            'right': aphex.Segment(-2.4, 3.2, 3.2, 7.4)
         }
         self.assertEqual(result, expected)
 
@@ -41,14 +37,18 @@ class BitangentTest(unittest.TestCase):
         c1 = aphex.Circle(5, 5, 2)
         result = aphex.bitangent(c0, c1, False)
         expected = {
-            'c0x0': 1.414213562373095,
-            'c0y0': -1.414213562373095,
-            'c0x1': -1.414213562373095,
-            'c0y1': 1.414213562373095,
-            'c1x0': 6.414213562373095,
-            'c1y0': 3.585786437626905,
-            'c1x1': 3.585786437626905,
-            'c1y1': 6.414213562373095,
+            'left': aphex.Segment(
+                1.414213562373095,
+                -1.414213562373095,
+                6.414213562373095,
+                3.585786437626905
+            ),
+            'right': aphex.Segment(
+                -1.414213562373095,
+                1.414213562373095,
+                3.585786437626905,
+                6.414213562373095
+            )
         }
         self.assertEqual(result, expected)
 

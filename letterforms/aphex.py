@@ -5,7 +5,7 @@ import unittest
 import svgwrite
 
 Circle = collections.namedtuple('Circle', ['x', 'y', 'r'])
-BiTangent = collections.namedtuple('Tangent', ['x0', 'y0', 'x1', 'y1'])
+Segment = collections.namedtuple('Segment', ['x0', 'y0', 'x1', 'y1'])
 
 def root_part(xp, yp, x, y, r):
     return math.sqrt((xp - x)**2 + (yp - y)**2 - r**2)
@@ -70,15 +70,8 @@ def parallel_tangents(x0, y0, x1, y1, r):
     c1t1 = parallel_tangent(center1, center0, r, False)
 
     return {
-        'c0x0': c0t0[0],
-        'c0y0': c0t0[1],
-        'c0x1': c0t1[0],
-        'c0y1': c0t1[1],
-
-        'c1x0': c1t0[0],
-        'c1y0': c1t0[1],
-        'c1x1': c1t1[0],
-        'c1y1': c1t1[1],
+        'left': Segment(c0t0[0], c0t0[1], c1t0[0], c1t0[1]),
+        'right': Segment(c0t1[0], c0t1[1], c1t1[0], c1t1[1]),
     }
 
 def bitangent(c0, c1, inner):
@@ -109,15 +102,18 @@ def bitangent(c0, c1, inner):
     denom1 = denom_part(xp, yp, c1.x, c1.y)
 
     return {
-        'c0x0': (c0.r**2 * (xp - c0.x) + c0.r * (yp - c0.y) * root0) / denom0 + c0.x,
-        'c0y0': (c0.r**2 * (yp - c0.y) - c0.r * (xp - c0.x) * root0) / denom0 + c0.y,
-        'c0x1': (c0.r**2 * (xp - c0.x) - c0.r * (yp - c0.y) * root0) / denom0 + c0.x,
-        'c0y1': (c0.r**2 * (yp - c0.y) + c0.r * (xp - c0.x) * root0) / denom0 + c0.y,
-
-        'c1x0': (c1.r**2 * (xp - c1.x) + c1.r * (yp - c1.y) * root1) / denom1 + c1.x,
-        'c1y0': (c1.r**2 * (yp - c1.y) - c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
-        'c1x1': (c1.r**2 * (xp - c1.x) - c1.r * (yp - c1.y) * root1) / denom1 + c1.x,
-        'c1y1': (c1.r**2 * (yp - c1.y) + c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
+        'left': Segment(
+            (c0.r**2 * (xp - c0.x) + c0.r * (yp - c0.y) * root0) / denom0 + c0.x,
+            (c0.r**2 * (yp - c0.y) - c0.r * (xp - c0.x) * root0) / denom0 + c0.y,
+            (c1.r**2 * (xp - c1.x) + c1.r * (yp - c1.y) * root1) / denom1 + c1.x,
+            (c1.r**2 * (yp - c1.y) - c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
+        ),
+        'right': Segment(
+            (c0.r**2 * (xp - c0.x) - c0.r * (yp - c0.y) * root0) / denom0 + c0.x,
+            (c0.r**2 * (yp - c0.y) + c0.r * (xp - c0.x) * root0) / denom0 + c0.y,
+            (c1.r**2 * (xp - c1.x) - c1.r * (yp - c1.y) * root1) / denom1 + c1.x,
+            (c1.r**2 * (yp - c1.y) + c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
+        ),
     }
 
 def main():
@@ -127,7 +123,7 @@ def main():
     next steps:
     - create namedtuples for circles and tangents
     - figure out which tangent we want in any given circumstance and only
-      ask for/receive it
+      ask for/receive it (lefts and rights are arbitrary right now)
     """
     dwg = svgwrite.Drawing('aphex.svg', profile='tiny')
     circles = [
@@ -141,17 +137,37 @@ def main():
 
     o = bitangent(circles[0], circles[2], False)
     i = bitangent(circles[0], circles[2], True)
+    o_left = o['left']
+    o_right = o['right']
     dwg.add(
-        dwg.line((o['c0x0'], o['c0y0']), (o['c1x0'], o['c1y0']), stroke='blue')
+        dwg.line(
+            (o_left.x0, o_left.y0),
+            (o_left.x1, o_left.y1),
+            stroke='blue'
+        )
     )
     dwg.add(
-        dwg.line((o['c0x1'], o['c0y1']), (o['c1x1'], o['c1y1']), stroke='blue')
+        dwg.line(
+            (o_right.x0, o_right.y0),
+            (o_right.x1, o_right.y1),
+            stroke='blue'
+        )
+    )
+    i_left = i['left']
+    i_right = i['right']
+    dwg.add(
+        dwg.line(
+            (i_left.x0, i_left.y0),
+            (i_left.x1, i_left.y1),
+            stroke='blue'
+        )
     )
     dwg.add(
-        dwg.line((i['c0x0'], i['c0y0']), (i['c1x0'], i['c1y0']), stroke='blue')
-    )
-    dwg.add(
-        dwg.line((i['c0x1'], i['c0y1']), (i['c1x1'], i['c1y1']), stroke='blue')
+        dwg.line(
+            (i_right.x0, i_right.y0),
+            (i_right.x1, i_right.y1),
+            stroke='blue'
+        )
     )
 
     dwg.save()
