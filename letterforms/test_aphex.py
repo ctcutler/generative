@@ -7,8 +7,6 @@ class BitangentTest(unittest.TestCase):
     def test_inner(self):
         result = aphex.bitangent(0, 0, 4, 5, 5, 3, True)
         expected = {
-            'xp': 2.857142857142857,
-            'yp': 2.857142857142857,
             'c0x0': 3.2,
             'c0y0': 2.4,
             'c0x1': 2.4,
@@ -23,8 +21,6 @@ class BitangentTest(unittest.TestCase):
     def test_outer(self):
         result = aphex.bitangent(0, 0, 4, 5, 5, 3, False)
         expected = {
-            'xp': 20.0,
-            'yp': 20.0,
             'c0x0': 3.2,
             'c0y0': -2.4,
             'c0x1': -2.4,
@@ -33,6 +29,20 @@ class BitangentTest(unittest.TestCase):
             'c1y0': 3.2,
             'c1x1': 3.2,
             'c1y1': 7.4,
+        }
+        self.assertEqual(result, expected)
+
+    def test_outer_same_r(self):
+        result = aphex.bitangent(0, 0, 2, 5, 5, 2, False)
+        expected = {
+            'c0x0': 1.414213562373095,
+            'c0y0': -1.414213562373095,
+            'c0x1': -1.414213562373095,
+            'c0y1': 1.414213562373095,
+            'c1x0': 6.414213562373095,
+            'c1y0': 3.585786437626905,
+            'c1x1': 3.585786437626905,
+            'c1y1': 6.414213562373095,
         }
         self.assertEqual(result, expected)
 
