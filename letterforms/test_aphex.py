@@ -3,12 +3,12 @@ import unittest
 
 import aphex
 
-class BitangentTest(unittest.TestCase):
+class TangentTest(unittest.TestCase):
     def test_inner(self):
         c0 = aphex.Circle(0, 0, 4)
         c1 = aphex.Circle(5, 5, 3)
-        result_lr = aphex.bitangent(c0, c1, aphex.LEFT, aphex.RIGHT)
-        result_rl = aphex.bitangent(c0, c1, aphex.RIGHT, aphex.LEFT)
+        result_lr = aphex.tangent(c0, c1, aphex.LEFT, aphex.RIGHT)
+        result_rl = aphex.tangent(c0, c1, aphex.RIGHT, aphex.LEFT)
         expected_lr = aphex.Segment(
             3.2, 2.4,
             2.600000000000001,
@@ -25,8 +25,8 @@ class BitangentTest(unittest.TestCase):
     def test_outer(self):
         c0 = aphex.Circle(0, 0, 4)
         c1 = aphex.Circle(5, 5, 3)
-        result_ll = aphex.bitangent(c0, c1, aphex.LEFT, aphex.LEFT)
-        result_rr = aphex.bitangent(c0, c1, aphex.RIGHT, aphex.RIGHT)
+        result_ll = aphex.tangent(c0, c1, aphex.LEFT, aphex.LEFT)
+        result_rr = aphex.tangent(c0, c1, aphex.RIGHT, aphex.RIGHT)
         expected_ll = aphex.Segment(3.2, -2.4, 7.4, 3.2)
         expected_rr = aphex.Segment(-2.4, 3.2, 3.2, 7.4)
         self.assertEqual(result_ll, expected_ll)
@@ -35,8 +35,8 @@ class BitangentTest(unittest.TestCase):
     def test_outer_same_r(self):
         c0 = aphex.Circle(0, 0, 2)
         c1 = aphex.Circle(5, 5, 2)
-        result_ll = aphex.bitangent(c0, c1, aphex.LEFT, aphex.LEFT)
-        result_rr = aphex.bitangent(c0, c1, aphex.RIGHT, aphex.RIGHT)
+        result_ll = aphex.tangent(c0, c1, aphex.LEFT, aphex.LEFT)
+        result_rr = aphex.tangent(c0, c1, aphex.RIGHT, aphex.RIGHT)
         expected_ll = aphex.Segment(
             1.414213562373095,
             -1.414213562373095,
