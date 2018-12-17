@@ -9,9 +9,11 @@ Segment = collections.namedtuple('Segment', ['x0', 'y0', 'x1', 'y1'])
 LEFT = 'left'
 RIGHT = 'right'
 
+def mag_v(v):
+    return math.sqrt(v[0]**2 + v[1]**2)
+
 def norm_v(v):
-    magnitude = math.sqrt(v[0]**2 + v[1]**2)
-    return (v[0] / magnitude, v[1] / magnitude)
+    return (v[0] / mag_v(v), v[1] / mag_v(v))
 
 def rotate_v(v, cw):
     if cw:
@@ -136,28 +138,42 @@ def bitangent(c0, c1, side0, side1):
             (c1.r**2 * (yp - c1.y) - c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
         )
 
+def arc_angle(pt0, pt1):
+    #https://stackoverflow.com/questions/14066933/direct-way-of-computing-clockwise-angle-between-2-vectors/16544330#16544330
+    dot = pt0[0] * pt1[0] + pt0[1] * pt1[1]
+    det = pt0[0] * pt1[1] + pt0[1] * pt1[0]
+    return math.degrees(math.atan2(dot, det))
 
 def main():
     """
     http://www.dazeddigital.com/music/article/34849/1/aphex-twin-logo-designer-posts-early-blueprints-on-instagram
+
+    two separate things:
+    1) the description of the circles and the straight lines that connect them
+    2) the lines and arcs that make up the path we build from 1)
+
+    description
+    - list of circles with radii and coordinates
+    - list of tangents between those circles (just which side to which side)
+
+    path components
+    - based on description, build a list of tangents between circles
+    - create corresponding list of arcs along circles between tangents
+    - build path based on two lists
+
     """
     dwg = svgwrite.Drawing('aphex.svg', profile='tiny')
-    c0 = Circle(100, 100, 50)
-    c1 = Circle(300, 300, 25)
-    c2 = Circle(500, 100, 50)
-    c3 = Circle(700, 300, 25)
-    c4 = Circle(900, 100, 25)
-    c5 = Circle(1100, 300, 50)
+    c0 = Circle(100, 300, 50)
+    c1 = Circle(300, 100, 25)
+    c2 = Circle(500, 300, 50)
 
-    for c in [c0, c1, c2, c3, c4, c5]:
+    for c in [c0, c1, c2]:
         dwg.add(dwg.circle((c.x, c.y), c.r, stroke='green', fill='white'))
 
 
-    for (ca, cb) in [(c0, c1), (c3, c2), (c4, c5)]:
+    prev_end = None
+    for (ca, cb) in [(c0, c1), (c1, c2), (c2, c0)]:
         left_left = bitangent(ca, cb, LEFT, LEFT)
-        left_right = bitangent(ca, cb, LEFT, RIGHT)
-        right_left = bitangent(ca, cb, RIGHT, LEFT)
-        right_right = bitangent(ca, cb, RIGHT, RIGHT)
         dwg.add(
             dwg.line(
                 (left_left.x0, left_left.y0),
@@ -165,27 +181,22 @@ def main():
                 stroke='red'
             )
         )
-        dwg.add(
-            dwg.line(
-                (left_right.x0, left_right.y0),
-                (left_right.x1, left_right.y1),
-                stroke='red'
-            )
-        )
-        dwg.add(
-            dwg.line(
-                (right_left.x0, right_left.y0),
-                (right_left.x1, right_left.y1),
-                stroke='blue'
-            )
-        )
-        dwg.add(
-            dwg.line(
-                (right_right.x0, right_right.y0),
-                (right_right.x1, right_right.y1),
-                stroke='blue'
-            )
-        )
+        cur_start = (left_left.x0, left_left.y0)
+        if prev_end:
+            dwg.add(dwg.path(
+                'M {} {} A {} {} {} {} {} {} {}'.format(
+                    prev_end[0],
+                    prev_end[1],
+                    ca.r,
+                    ca.r,
+                    arc_angle(prev_end, cur_start),
+                    0,
+                    1,
+                    cur_start[0],
+                    cur_start[1]
+                )
+            ))
+        prev_end = (left_left.x1, left_left.y1)
 
     dwg.save()
 
