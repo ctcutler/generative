@@ -6,7 +6,7 @@ import svgwrite
 
 Circle = collections.namedtuple('Circle', ['x', 'y', 'r'])
 Segment = collections.namedtuple('Segment', ['x0', 'y0', 'x1', 'y1'])
-Arc = collections.namedtuple('Arc', ['x0', 'y0', 'x1', 'y1', 'r', 'a'])
+Arc = collections.namedtuple('Arc', ['x0', 'y0', 'x1', 'y1', 'r', 'a', 'l', 's'])
 LEFT = 'left'
 RIGHT = 'right'
 
@@ -110,33 +110,19 @@ def tangent(c0, c1, side0, side1):
     root1 = root_part(xp, yp, c1.x, c1.y, c1.r)
     denom1 = denom_part(xp, yp, c1.x, c1.y)
 
-    if side0 == LEFT and c0.r > c1.r:
+    if side0 == LEFT:
         return Segment(
             (c0.r**2 * (xp - c0.x) + c0.r * (yp - c0.y) * root0) / denom0 + c0.x,
             (c0.r**2 * (yp - c0.y) - c0.r * (xp - c0.x) * root0) / denom0 + c0.y,
             (c1.r**2 * (xp - c1.x) + c1.r * (yp - c1.y) * root1) / denom1 + c1.x,
             (c1.r**2 * (yp - c1.y) - c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
         )
-    elif side0 == LEFT and c0.r <= c1.r:
+    elif side0 == RIGHT:
         return Segment(
             (c0.r**2 * (xp - c0.x) - c0.r * (yp - c0.y) * root0) / denom0 + c0.x,
             (c0.r**2 * (yp - c0.y) + c0.r * (xp - c0.x) * root0) / denom0 + c0.y,
             (c1.r**2 * (xp - c1.x) - c1.r * (yp - c1.y) * root1) / denom1 + c1.x,
             (c1.r**2 * (yp - c1.y) + c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
-        )
-    elif side0 == RIGHT and c0.r > c1.r:
-        return Segment(
-            (c0.r**2 * (xp - c0.x) - c0.r * (yp - c0.y) * root0) / denom0 + c0.x,
-            (c0.r**2 * (yp - c0.y) + c0.r * (xp - c0.x) * root0) / denom0 + c0.y,
-            (c1.r**2 * (xp - c1.x) - c1.r * (yp - c1.y) * root1) / denom1 + c1.x,
-            (c1.r**2 * (yp - c1.y) + c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
-        )
-    elif side0 == RIGHT and c0.r <= c1.r:
-        return Segment(
-            (c0.r**2 * (xp - c0.x) + c0.r * (yp - c0.y) * root0) / denom0 + c0.x,
-            (c0.r**2 * (yp - c0.y) - c0.r * (xp - c0.x) * root0) / denom0 + c0.y,
-            (c1.r**2 * (xp - c1.x) + c1.r * (yp - c1.y) * root1) / denom1 + c1.x,
-            (c1.r**2 * (yp - c1.y) - c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
         )
 
 def arc_angle(x0, y0, x1, y1):
@@ -146,13 +132,17 @@ def arc_angle(x0, y0, x1, y1):
     return math.degrees(math.atan2(dot, det))
 
 def arc(t0, t1, c):
+    # large arc: arc is > 180 degrees
+    # sweep: 
+    angle = arc_angle(t0.x1, t0.y1, t1.x0, t1.y0)
     return Arc(
-        t0.x1, t0.y1, t1.x0, t1.y0, c.r,
-        arc_angle(t0.x1, t0.y1, t1.x0, t1.y0)
+        t0.x1, t0.y1, t1.x0, t1.y0, c.r, angle,
+        l = 1 if angle >= 180 else 0,
+        s = 0 
     )
 
 def arc_svg(a):
-    return 'A {r} {r} {a} 0 1 {x1} {y1}'.format(**a._asdict())
+    return 'A {r} {r} {a} {l} {s} {x1} {y1}'.format(**a._asdict())
 
 def tangent_svg(t):
     return 'L {x1} {y1}'.format(**t._asdict())
@@ -173,7 +163,6 @@ def draw(circles, sides):
         tangent(circles[-1], circles[0], sides[-1], sides[0])
     ]
 
-
     arcs = [
         arc(tangents[-1], tangents[0], circles[0])
     ] + [
@@ -190,6 +179,10 @@ def draw(circles, sides):
 
     dwg = svgwrite.Drawing('aphex.svg', profile='tiny')
     dwg.add(dwg.path(path))
+
+    for circle in circles:
+        dwg.add(dwg.circle((circle.x, circle.y), circle.r, stroke='blue', fill_opacity=0))
+
     dwg.save()
 
 def main():
@@ -197,12 +190,13 @@ def main():
     http://www.dazeddigital.com/music/article/34849/1/aphex-twin-logo-designer-posts-early-blueprints-on-instagram
     """
     circles = [
-        Circle(100, 300, 50),
-        Circle(300, 100, 25),
-        Circle(500, 300, 50)
+        Circle(500, 100, 65),
+        Circle(100, 100, 65),
+        Circle(180, 100, 65),
+        Circle(280, 124, 24),
     ]
 
-    sides = [ LEFT, LEFT, LEFT ]
+    sides = [ RIGHT, RIGHT, RIGHT, LEFT ]
 
     draw(circles, sides)
 
