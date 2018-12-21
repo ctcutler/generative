@@ -13,6 +13,9 @@ RIGHT = 'right'
 def mag_v(v):
     return math.sqrt(v[0]**2 + v[1]**2)
 
+def distance_v(v1, v2):
+    return mag_v(sub_v(v2, v1))
+
 def norm_v(v):
     return (v[0] / mag_v(v), v[1] / mag_v(v))
 
@@ -131,14 +134,42 @@ def arc_angle(x0, y0, x1, y1):
     det = x0 * y1 + y0 * x1
     return math.degrees(math.atan2(dot, det))
 
-def arc(t0, t1, c):
+def arc(t0, t1, c, side):
     # large arc: arc is > 180 degrees
     # sweep: 
     angle = arc_angle(t0.x1, t0.y1, t1.x0, t1.y0)
+    # arc 1: 0, 0 / 1, 0
+    # arc 2: 0, 0
+    # arc 3: 0, 1
+    # arc 4: 1, 0
+    # are the far parts of the tangents nearer or father away?
+    # or: how do the slopes compare?. . . if they are equal then 
+    # parallel. . . 
+
+    # cannot brain this right now but suspect that I can use vector
+    # arithmetic to tell whether vectors are diverging or converging
+    # and *that* should tell me which sweep flag to use
+
+    # subtract near points from far points and normalize
+    v0 = sub_v((t0.x0, t0.y0), (t0.x1, t0.y1))
+    v1 = sub_v((t1.x1, t1.y1), (t1.x0, t1.y0))
+
+    print(v0)
+    print(v1)
+    print()
+
+    d1 = distance_v(v1, v0) 
+
+    doubled_v0 = scale_v(v0, 2)
+    doubled_v1 = scale_v(v1, 2)
+
+    d2 = distance_v(doubled_v1, doubled_v0)
+
+
     return Arc(
         t0.x1, t0.y1, t1.x0, t1.y0, c.r, angle,
-        l = 1 if angle >= 180 else 0,
-        s = 0 
+        l = 1 if d2 < d1 else 0,
+        s = 1 if side == LEFT else 0
     )
 
 def arc_svg(a):
@@ -164,9 +195,9 @@ def draw(circles, sides):
     ]
 
     arcs = [
-        arc(tangents[-1], tangents[0], circles[0])
+        arc(tangents[-1], tangents[0], circles[0], sides[0])
     ] + [
-        arc(tangents[i-1], tangents[i], circles[i])
+        arc(tangents[i-1], tangents[i], circles[i], sides[i])
         for i in range(1, len(tangents))
     ]
 
