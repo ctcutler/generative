@@ -34,6 +34,13 @@ def add_v(v1, v2):
 def sub_v(v1, v2):
     return (v1[0] - v2[0], v1[1] - v2[1])
 
+def converges(t0_near, t0_far, t1_near, t1_far):
+    """
+    So what do I propose to do here? Calculate the distnaces between the
+    near points and the far points and compare them.
+    """
+    return distance_v(t0_near, t1_near) > distance_v(t0_far, t1_far)
+
 def parallel_tangent_point(center_v1, center_v2, r, cw):
     """
     Method for handling circles of the same size based on this Stack Overflow:
@@ -128,47 +135,44 @@ def tangent(c0, c1, side0, side1):
             (c1.r**2 * (yp - c1.y) + c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
         )
 
-def arc_angle(x0, y0, x1, y1):
-    # from: https://stackoverflow.com/questions/14066933/direct-way-of-computing-clockwise-angle-between-2-vectors/16544330#16544330
-    dot = x0 * x1 + y0 * y1
-    det = x0 * y1 + y0 * x1
-    return math.degrees(math.atan2(dot, det))
+def det(v0, v1):
+    return v0[0] * v1[1] - v0[1] * v1[0]
+
+def dot(v0, v1):
+    return v0[0] * v1[0] - v0[1] * v1[1]
 
 def arc(t0, t1, c, side):
-    # large arc: arc is > 180 degrees
-    # sweep: 
-    angle = arc_angle(t0.x1, t0.y1, t1.x0, t1.y0)
     # arc 1: 0, 0 / 1, 0
     # arc 2: 0, 0
     # arc 3: 0, 1
     # arc 4: 1, 0
     # are the far parts of the tangents nearer or father away?
-    # or: how do the slopes compare?. . . if they are equal then 
-    # parallel. . . 
+    # or: how do the slopes compare?. . . if they are equal then
+    # parallel. . .
 
     # cannot brain this right now but suspect that I can use vector
     # arithmetic to tell whether vectors are diverging or converging
     # and *that* should tell me which sweep flag to use
 
-    # subtract near points from far points and normalize
+    # converges doesn't work because vectors aren't the same length!!!
+    # can I normalize and hten compare?
+
+    # build vectors from tangent lines, away from circle
     v0 = sub_v((t0.x0, t0.y0), (t0.x1, t0.y1))
     v1 = sub_v((t1.x1, t1.y1), (t1.x0, t1.y0))
 
-    print(v0)
-    print(v1)
+    # make v0's magnitude equal v1's
+    v0 = scale_v(norm_v(v0), mag_v(v1))
+
+    print(distance_v((t0.x1, t0.y1), (t1.x1, t1.y1)))
+    print(distance_v(v0, v1))
+    print(c)
     print()
-
-    d1 = distance_v(v1, v0) 
-
-    doubled_v0 = scale_v(v0, 2)
-    doubled_v1 = scale_v(v1, 2)
-
-    d2 = distance_v(doubled_v1, doubled_v0)
-
-
+    #converged = converges((t0.x1, t0.y1), (t0.x0, t0.y0), (t1.x0, t1.y0), (t1.x1, t1.y1))
+    #print(converged)
     return Arc(
-        t0.x1, t0.y1, t1.x0, t1.y0, c.r, angle,
-        l = 1 if d2 < d1 else 0,
+        t0.x1, t0.y1, t1.x0, t1.y0, c.r, 0,
+        l = 1, # FIXME
         s = 1 if side == LEFT else 0
     )
 

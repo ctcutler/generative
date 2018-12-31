@@ -79,5 +79,20 @@ class TangentTest(unittest.TestCase):
         self.assertEqual(result_ll, expected_ll)
         self.assertEqual(result_rr, expected_rr)
 
+    def test_converges(self):
+        tin0 = (0, 0)
+        tin1 = (2, 2)
+        tout0 = (2, 3)
+        tout1 = (0, 4)
+        result = aphex.converges(tin1, tin0, tout0, tout1)
+        self.assertFalse(result)
+
+        tin0 = (2, 2)
+        tin1 = (0, 0)
+        tout0 = (0, 4)
+        tout1 = (2, 3)
+        result = aphex.converges(tin1, tin0, tout0, tout1)
+        self.assertTrue(result)
+
 if __name__ == '__main__':
     unittest.main()
