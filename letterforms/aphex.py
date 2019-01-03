@@ -34,6 +34,10 @@ def add_v(v1, v2):
 def sub_v(v1, v2):
     return (v1[0] - v2[0], v1[1] - v2[1])
 
+def draw_v(dwg, p0, p1):
+    dwg.add(dwg.line(p0, p1, stroke='green'))
+    dwg.add(dwg.circle(p1, 3, stroke='green'))
+
 def converges(t0_near, t0_far, t1_near, t1_far):
     """
     So what do I propose to do here? Calculate the distnaces between the
@@ -141,38 +145,36 @@ def det(v0, v1):
 def dot(v0, v1):
     return v0[0] * v1[0] - v0[1] * v1[1]
 
-def arc(t0, t1, c, side):
-    # arc 1: 0, 0 / 1, 0
-    # arc 2: 0, 0
-    # arc 3: 0, 1
-    # arc 4: 1, 0
-    # are the far parts of the tangents nearer or father away?
-    # or: how do the slopes compare?. . . if they are equal then
-    # parallel. . .
+def arc(t0, t1, c, side, dwg):
 
-    # cannot brain this right now but suspect that I can use vector
-    # arithmetic to tell whether vectors are diverging or converging
-    # and *that* should tell me which sweep flag to use
+    # FIXME: abstract?
+    t0_on_circle = (t0.x1, t0.y1)
+    t0_off_circle = (t0.x0, t0.y0)
+    t1_on_circle = (t1.x0, t1.y0)
+    t1_off_circle = (t1.x1, t1.y1)
+    v0 = sub_v(t0_off_circle, t0_on_circle)
+    v1 = sub_v(t1_off_circle, t1_on_circle)
 
-    # converges doesn't work because vectors aren't the same length!!!
-    # can I normalize and hten compare?
 
-    # build vectors from tangent lines, away from circle
-    v0 = sub_v((t0.x0, t0.y0), (t0.x1, t0.y1))
-    v1 = sub_v((t1.x1, t1.y1), (t1.x0, t1.y0))
-
-    # make v0's magnitude equal v1's
+    # FIXME: scale the longer to the shorter
     v0 = scale_v(norm_v(v0), mag_v(v1))
+    v0 = add_v(v0, t0_on_circle)
 
-    print(distance_v((t0.x1, t0.y1), (t1.x1, t1.y1)))
-    print(distance_v(v0, v1))
+    draw_v(dwg, t1_on_circle, t1_off_circle)
+    draw_v(dwg, t0_on_circle, v0)
+
+    near_distance = distance_v(t1_on_circle, t0_on_circle)
+    far_distance = distance_v(t1_off_circle, v0)
+
+    print(near_distance)
+    print(far_distance)
     print(c)
     print()
     #converged = converges((t0.x1, t0.y1), (t0.x0, t0.y0), (t1.x0, t1.y0), (t1.x1, t1.y1))
     #print(converged)
     return Arc(
         t0.x1, t0.y1, t1.x0, t1.y0, c.r, 0,
-        l = 1, # FIXME
+        l = 0 if far_distance > near_distance else 1,
         s = 1 if side == LEFT else 0
     )
 
@@ -191,6 +193,9 @@ def draw(circles, sides):
 
     More specifically, sides[i] dictates how the path passes around circle[i].
     """
+    dwg = svgwrite.Drawing('aphex.svg', profile='tiny')
+
+    # FIXME: can I do this more neatly?
     tangents = [
         tangent(circles[i], circles[i+1], sides[i], sides[i+1])
         for i in range(len(circles) - 1)
@@ -199,20 +204,17 @@ def draw(circles, sides):
     ]
 
     arcs = [
-        arc(tangents[-1], tangents[0], circles[0], sides[0])
-    ] + [
-        arc(tangents[i-1], tangents[i], circles[i], sides[i])
-        for i in range(1, len(tangents))
+        arc(tangents[i-1], tangents[i], circles[i], sides[i], dwg)
+        for i in range(len(tangents))
     ]
 
     path_commands = [ 'M {} {}'.format(arcs[0].x0, arcs[0].y0) ]
-    for i in range(len(tangents)):
+    for i in range(len(arcs)):
         path_commands.append(arc_svg(arcs[i]))
         path_commands.append(tangent_svg(tangents[i]))
 
     path = ' '.join(path_commands)
 
-    dwg = svgwrite.Drawing('aphex.svg', profile='tiny')
     dwg.add(dwg.path(path))
 
     for circle in circles:
