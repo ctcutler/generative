@@ -84,14 +84,14 @@ class TangentTest(unittest.TestCase):
         tin1 = (2, 2)
         tout0 = (2, 3)
         tout1 = (0, 4)
-        result = aphex.converges(tin1, tin0, tout0, tout1)
+        result = aphex.converging(tin1, tin0, tout0, tout1)
         self.assertFalse(result)
 
         tin0 = (2, 2)
         tin1 = (0, 0)
         tout0 = (0, 4)
         tout1 = (2, 3)
-        result = aphex.converges(tin1, tin0, tout0, tout1)
+        result = aphex.converging(tin1, tin0, tout0, tout1)
         self.assertTrue(result)
 
 if __name__ == '__main__':
