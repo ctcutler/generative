@@ -38,13 +38,6 @@ def draw_v(dwg, p0, p1):
     dwg.add(dwg.line(p0, p1, stroke='green'))
     dwg.add(dwg.circle(p1, 3, stroke='green'))
 
-def converges(t0_near, t0_far, t1_near, t1_far):
-    """
-    So what do I propose to do here? Calculate the distnaces between the
-    near points and the far points and compare them.
-    """
-    return distance_v(t0_near, t1_near) > distance_v(t0_far, t1_far)
-
 def parallel_tangent_point(center_v1, center_v2, r, cw):
     """
     Method for handling circles of the same size based on this Stack Overflow:
@@ -145,36 +138,42 @@ def det(v0, v1):
 def dot(v0, v1):
     return v0[0] * v1[0] - v0[1] * v1[1]
 
+def converging(near0, far0, near1, far1):
+    """
+    Determine whether the directional segments defined by near0 -> far0 and
+    near1 -> far1 converge.
+
+    Shorten the longer segment to match the shorter one (to avoid cross overs)
+    then compare the distances between the endpoints.
+    """
+    v0 = sub_v(far0, near0)
+    v1 = sub_v(far1, near1)
+
+    near_distance = distance_v(near1, near0)
+    if mag_v(v0) > mag_v(v1):
+        shortened = add_v(
+            scale_v(norm_v(v1), mag_v(v0)),
+            near0
+        )
+        far_distance = distance_v(far0, shortened)
+    else:
+        shortened = add_v(
+            scale_v(norm_v(v0), mag_v(v1)),
+            near1
+        )
+        far_distance = distance_v(far1, shortened)
+
+    return near_distance > far_distance
+
 def arc(t0, t1, c, side, dwg):
+    converges = converging(
+        (t0.x1, t0.y1), (t0.x0, t0.y0),
+        (t1.x0, t1.y0), (t1.x1, t1.y1)
+    )
 
-    # FIXME: abstract?
-    t0_on_circle = (t0.x1, t0.y1)
-    t0_off_circle = (t0.x0, t0.y0)
-    t1_on_circle = (t1.x0, t1.y0)
-    t1_off_circle = (t1.x1, t1.y1)
-    v0 = sub_v(t0_off_circle, t0_on_circle)
-    v1 = sub_v(t1_off_circle, t1_on_circle)
-
-
-    # FIXME: scale the longer to the shorter
-    v0 = scale_v(norm_v(v0), mag_v(v1))
-    v0 = add_v(v0, t0_on_circle)
-
-    draw_v(dwg, t1_on_circle, t1_off_circle)
-    draw_v(dwg, t0_on_circle, v0)
-
-    near_distance = distance_v(t1_on_circle, t0_on_circle)
-    far_distance = distance_v(t1_off_circle, v0)
-
-    print(near_distance)
-    print(far_distance)
-    print(c)
-    print()
-    #converged = converges((t0.x1, t0.y1), (t0.x0, t0.y0), (t1.x0, t1.y0), (t1.x1, t1.y1))
-    #print(converged)
     return Arc(
         t0.x1, t0.y1, t1.x0, t1.y0, c.r, 0,
-        l = 0 if far_distance > near_distance else 1,
+        l = 1 if converges else 0,
         s = 1 if side == LEFT else 0
     )
 
@@ -195,7 +194,6 @@ def draw(circles, sides):
     """
     dwg = svgwrite.Drawing('aphex.svg', profile='tiny')
 
-    # FIXME: can I do this more neatly?
     tangents = [
         tangent(circles[i], circles[i+1], sides[i], sides[i+1])
         for i in range(len(circles) - 1)
