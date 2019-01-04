@@ -225,24 +225,39 @@ def draw(circles, sides):
     dwg = svgwrite.Drawing('aphex.svg', profile='tiny')
     dwg.add(dwg.path(path))
 
-    for circle in circles:
-        dwg.add(dwg.circle((circle.x, circle.y), circle.r, stroke='blue', fill_opacity=0))
+    #for circle in circles:
+    #    dwg.add(dwg.circle((circle.x, circle.y), circle.r, stroke='blue', fill_opacity=0))
 
     dwg.save()
 
 def main():
     """
     http://www.dazeddigital.com/music/article/34849/1/aphex-twin-logo-designer-posts-early-blueprints-on-instagram
+
+
+    language:
+    - center circle
+    - n arms
+      - arm "end" circle
+      - arm "pit" circle
+      - complications between end and pit
+    - always go right around the end and left around the pit
+    - no overlapping circles when changing sides between them
     """
     circles = [
-        Circle(500, 100, 65),
-        Circle(100, 100, 65),
-        Circle(180, 100, 65),
-        Circle(280, 124, 24),
-        Circle(160, 450, 30),
+        Circle(450, 100, 55), # UR
+        Circle(108, 100, 55), # UL
+        Circle(188, 100, 55),
+        Circle(276, 120, 20),
+        Circle(170, 425, 27), # LL
+        Circle(310, 363, 38),
+        Circle(318, 290, 33),
+        Circle(370, 225, 26),
+        Circle(620, 480, 35), # LR
     ]
 
-    sides = [ RIGHT, RIGHT, RIGHT, LEFT, RIGHT ]
+    sides = [ RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, RIGHT, LEFT, RIGHT ]
+
 
     draw(circles, sides)
 
