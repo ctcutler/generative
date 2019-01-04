@@ -117,20 +117,31 @@ def tangent(c0, c1, side0, side1):
     root1 = root_part(xp, yp, c1.x, c1.y, c1.r)
     denom1 = denom_part(xp, yp, c1.x, c1.y)
 
-    if side0 == LEFT:
-        return Segment(
-            (c0.r**2 * (xp - c0.x) + c0.r * (yp - c0.y) * root0) / denom0 + c0.x,
-            (c0.r**2 * (yp - c0.y) - c0.r * (xp - c0.x) * root0) / denom0 + c0.y,
-            (c1.r**2 * (xp - c1.x) + c1.r * (yp - c1.y) * root1) / denom1 + c1.x,
-            (c1.r**2 * (yp - c1.y) - c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
-        )
-    elif side0 == RIGHT:
-        return Segment(
-            (c0.r**2 * (xp - c0.x) - c0.r * (yp - c0.y) * root0) / denom0 + c0.x,
-            (c0.r**2 * (yp - c0.y) + c0.r * (xp - c0.x) * root0) / denom0 + c0.y,
-            (c1.r**2 * (xp - c1.x) - c1.r * (yp - c1.y) * root1) / denom1 + c1.x,
-            (c1.r**2 * (yp - c1.y) + c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
-        )
+    sa = Segment(
+        (c0.r**2 * (xp - c0.x) + c0.r * (yp - c0.y) * root0) / denom0 + c0.x,
+        (c0.r**2 * (yp - c0.y) - c0.r * (xp - c0.x) * root0) / denom0 + c0.y,
+        (c1.r**2 * (xp - c1.x) + c1.r * (yp - c1.y) * root1) / denom1 + c1.x,
+        (c1.r**2 * (yp - c1.y) - c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
+    )
+    sb = Segment(
+        (c0.r**2 * (xp - c0.x) - c0.r * (yp - c0.y) * root0) / denom0 + c0.x,
+        (c0.r**2 * (yp - c0.y) + c0.r * (xp - c0.x) * root0) / denom0 + c0.y,
+        (c1.r**2 * (xp - c1.x) - c1.r * (yp - c1.y) * root1) / denom1 + c1.x,
+        (c1.r**2 * (yp - c1.y) + c1.r * (xp - c1.x) * root1) / denom1 + c1.y,
+    )
+
+    if c0.r < c1.r and side0 == side1:
+        if side0 == LEFT:
+            s = sb
+        elif side0 == RIGHT:
+            s = sa
+    else:
+        if side0 == LEFT:
+            s = sa
+        elif side0 == RIGHT:
+            s = sb
+
+    return s
 
 def det(v0, v1):
     return v0[0] * v1[1] - v0[1] * v1[0]
@@ -165,7 +176,7 @@ def converging(near0, far0, near1, far1):
 
     return near_distance > far_distance
 
-def arc(t0, t1, c, side, dwg):
+def arc(t0, t1, c, side):
     converges = converging(
         (t0.x1, t0.y1), (t0.x0, t0.y0),
         (t1.x0, t1.y0), (t1.x1, t1.y1)
@@ -192,8 +203,6 @@ def draw(circles, sides):
 
     More specifically, sides[i] dictates how the path passes around circle[i].
     """
-    dwg = svgwrite.Drawing('aphex.svg', profile='tiny')
-
     tangents = [
         tangent(circles[i], circles[i+1], sides[i], sides[i+1])
         for i in range(len(circles) - 1)
@@ -202,7 +211,7 @@ def draw(circles, sides):
     ]
 
     arcs = [
-        arc(tangents[i-1], tangents[i], circles[i], sides[i], dwg)
+        arc(tangents[i-1], tangents[i], circles[i], sides[i])
         for i in range(len(tangents))
     ]
 
@@ -213,6 +222,7 @@ def draw(circles, sides):
 
     path = ' '.join(path_commands)
 
+    dwg = svgwrite.Drawing('aphex.svg', profile='tiny')
     dwg.add(dwg.path(path))
 
     for circle in circles:
@@ -229,9 +239,10 @@ def main():
         Circle(100, 100, 65),
         Circle(180, 100, 65),
         Circle(280, 124, 24),
+        Circle(160, 450, 30),
     ]
 
-    sides = [ RIGHT, RIGHT, RIGHT, LEFT ]
+    sides = [ RIGHT, RIGHT, RIGHT, LEFT, RIGHT ]
 
     draw(circles, sides)
 

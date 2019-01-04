@@ -45,7 +45,6 @@ class TangentTest(unittest.TestCase):
         result_lr = aphex.tangent(c0, c1, aphex.LEFT, aphex.RIGHT)
         self.assertGreater(result_lr.y1, result_lr.y0)
 
-
     def test_right_to_left(self):
         # c0 is bigger
         c0 = aphex.Circle(0, 0, 4)
@@ -58,6 +57,18 @@ class TangentTest(unittest.TestCase):
         c1 = aphex.Circle(10, 0, 4)
         result_rl = aphex.tangent(c0, c1, aphex.RIGHT, aphex.LEFT)
         self.assertGreater(result_rl.y0, result_rl.y1)
+
+    def test_small_to_large(self):
+        c0 = aphex.Circle(x=160, y=450, r=30)
+        c1 = aphex.Circle(x=500, y=100, r=65)
+        result = aphex.tangent(c0, c1, aphex.RIGHT, aphex.RIGHT)
+        expected = aphex.Segment(
+            x0=179.96358510145777,
+            y0=472.3931969557018,
+            x1=543.2544343864918,
+            y1=148.51859340402063
+        )
+        self.assertEqual(result, expected)
 
     def test_outer_same_r(self):
         c0 = aphex.Circle(0, 0, 2)
