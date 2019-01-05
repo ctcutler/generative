@@ -225,25 +225,71 @@ def draw(circles, sides):
     dwg = svgwrite.Drawing('aphex.svg', profile='tiny')
     dwg.add(dwg.path(path))
 
-    #for circle in circles:
-    #    dwg.add(dwg.circle((circle.x, circle.y), circle.r, stroke='blue', fill_opacity=0))
+    for circle in circles:
+        dwg.add(dwg.circle((circle.x, circle.y), circle.r, stroke='blue', fill_opacity=0))
 
     dwg.save()
 
+
+
+TAN_60 = math.tan(math.radians(60))
+TAN_30 = math.tan(math.radians(30))
+
+# clockwise from 12 o'clock
+ARM_SLOPE_VECTORS = [
+    (1, -TAN_60), (1, 0), (1, TAN_60),
+    (1, -TAN_60), (1, 0), (1, TAN_60),
+]
+PIT_SLOPE_VECTORS = [
+    (1, -TAN_30), (1, TAN_30), (0, 1),
+    (1, -TAN_30), (1, TAN_30), (0, 1),
+]
+
+def arm_circle(center, slope_v, length, radius):
+    length_v = scale_v(norm_v(slope_v), length)
+    total_v = add_v(length_v, center)
+
+    return Circle(total_v[0], total_v[1], radius)
+
+def arm_end(center, arm_index, length, radius):
+    if arm_index > 2:
+        length *= -1
+
+    slope_v = ARM_SLOPE_VECTORS[arm_index]
+    return arm_circle(center, slope_v, length, radius)
+
+def arm_pit(center, arm_index, length, radius):
+    if arm_index > 2:
+        length *= -1
+
+    slope_v = PIT_SLOPE_VECTORS[arm_index]
+    return arm_circle(center, slope_v, length, radius)
+
 def main():
     """
+    inspiration:
     http://www.dazeddigital.com/music/article/34849/1/aphex-twin-logo-designer-posts-early-blueprints-on-instagram
-
 
     language:
     - center circle
-    - n arms
-      - arm "end" circle
-      - arm "pit" circle
-      - complications between end and pit
+    - n arms on 3 axes
+      - arm "end" circle always on axis
+      - arm "pit" circle always somewhere between axes
+      - complications between end and pit to one side of axis
     - always go right around the end and left around the pit
     - no overlapping circles when changing sides between them
-    """
+
+    tooling:
+    - find a point on an axis
+    - find a point n units perpendicularly off the axis
+
+    to do:
+    - 3 arms, all the same length and width
+    - random lengths and widths
+    - arm complications
+
+
+    original (more or less):
     circles = [
         Circle(450, 100, 55), # UR
         Circle(108, 100, 55), # UL
@@ -257,7 +303,22 @@ def main():
     ]
 
     sides = [ RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, RIGHT, LEFT, RIGHT ]
+    """
 
+    center = (400, 400)
+    circles = [ Circle(center[0], center[1], 50) ]
+    sides = [ LEFT ]
+
+    n = 3
+    for arm in range(n-1):
+        circles.append(arm_end(center, arm, 200, 30))
+        sides.append(LEFT)
+
+        circles.append(arm_pit(center, arm, 100, 15))
+        sides.append(RIGHT)
+
+    circles.append(arm_end(center, n-1, 200, 30))
+    sides.append(LEFT)
 
     draw(circles, sides)
 
