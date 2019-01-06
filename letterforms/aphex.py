@@ -1,5 +1,6 @@
 import collections
 import math
+import random
 import unittest
 
 import svgwrite
@@ -194,7 +195,7 @@ def arc_svg(a):
 def tangent_svg(t):
     return 'L {x1} {y1}'.format(**t._asdict())
 
-def draw(circles, sides):
+def draw_path(circles, sides):
     """
     Takes a list of N Circle objects and a list of N side constants (LEFT or
     RIGHT) and generates a path that traverses the circles as though it were a
@@ -230,40 +231,60 @@ def draw(circles, sides):
 
     dwg.save()
 
-
-
-TAN_60 = math.tan(math.radians(60))
-TAN_30 = math.tan(math.radians(30))
-
-# clockwise from 12 o'clock
-ARM_SLOPE_VECTORS = [
-    (1, -TAN_60), (1, 0), (1, TAN_60),
-    (1, -TAN_60), (1, 0), (1, TAN_60),
-]
-PIT_SLOPE_VECTORS = [
-    (1, -TAN_30), (1, TAN_30), (0, 1),
-    (1, -TAN_30), (1, TAN_30), (0, 1),
-]
-
 def arm_circle(center, slope_v, length, radius):
     length_v = scale_v(norm_v(slope_v), length)
     total_v = add_v(length_v, center)
 
     return Circle(total_v[0], total_v[1], radius)
 
-def arm_end(center, arm_index, length, radius):
-    if arm_index > 2:
-        length *= -1
+def slope_vector(degrees):
+    rad = math.radians(degrees)
+    return (round(math.sin(rad), 15), -round(math.cos(rad), 15))
 
-    slope_v = ARM_SLOPE_VECTORS[arm_index]
-    return arm_circle(center, slope_v, length, radius)
+def draw_arms(center, positions):
+    """
+    Draws an arm at ever position specified in positions.  Each position
+    is an angle in degrees (0-359) clockwise from 12 o'clock.
+    """
+    circles = []
+    sides = []
 
-def arm_pit(center, arm_index, length, radius):
-    if arm_index > 2:
-        length *= -1
+    for (i, position) in enumerate(positions):
+        circles.append(arm_circle(center, slope_vector(position), 200, 30))
+        sides.append(LEFT)
 
-    slope_v = PIT_SLOPE_VECTORS[arm_index]
-    return arm_circle(center, slope_v, length, radius)
+        # calculate armpit position
+        if i + 1 == len(positions):
+            delta = positions[0] +  (360 - position)
+            armpit = ((delta / 2) + position) % 360
+        else:
+            delta = positions[i+1] - position
+            armpit = (delta / 2) + position
+
+        if delta >= 180:
+            circles.append(arm_circle(center, (1, 0), 0, 50))
+            sides.append(LEFT)
+        else:
+            circles.append(arm_circle(center, slope_vector(armpit), 100, 10))
+            sides.append(RIGHT)
+
+    draw_path(circles, sides)
+
+def draw_original():
+    circles = [
+        Circle(450, 100, 55), # UR
+        Circle(108, 100, 55), # UL
+        Circle(188, 100, 55),
+        Circle(276, 120, 20),
+        Circle(170, 425, 27), # LL
+        Circle(310, 363, 38),
+        Circle(318, 290, 33),
+        Circle(370, 225, 26),
+        Circle(620, 480, 35), # LR
+    ]
+
+    sides = [ RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, RIGHT, LEFT, RIGHT ]
+    draw_path(circles, sides)
 
 def main():
     """
@@ -284,43 +305,21 @@ def main():
     - find a point n units perpendicularly off the axis
 
     to do:
-    - 3 arms, all the same length and width
+    X 3 arms, all the same length and width
+    - random arms
     - random lengths and widths
+    - slight angle variation
     - arm complications
 
 
     original (more or less):
-    circles = [
-        Circle(450, 100, 55), # UR
-        Circle(108, 100, 55), # UL
-        Circle(188, 100, 55),
-        Circle(276, 120, 20),
-        Circle(170, 425, 27), # LL
-        Circle(310, 363, 38),
-        Circle(318, 290, 33),
-        Circle(370, 225, 26),
-        Circle(620, 480, 35), # LR
-    ]
 
-    sides = [ RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, RIGHT, LEFT, RIGHT ]
     """
-
     center = (400, 400)
-    circles = [ Circle(center[0], center[1], 50) ]
-    sides = [ LEFT ]
+    draw_arms(center, [0, 120, 240])
+    #draw_arms(center, [72, 172, 219])
+    #draw_original()
 
-    n = 3
-    for arm in range(n-1):
-        circles.append(arm_end(center, arm, 200, 30))
-        sides.append(LEFT)
-
-        circles.append(arm_pit(center, arm, 100, 15))
-        sides.append(RIGHT)
-
-    circles.append(arm_end(center, n-1, 200, 30))
-    sides.append(LEFT)
-
-    draw(circles, sides)
 
 if __name__== "__main__":
     main()
