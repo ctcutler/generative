@@ -161,16 +161,16 @@ def converging(near0, far0, near1, far1):
     v1 = sub_v(far1, near1)
 
     near_distance = distance_v(near1, near0)
-    if mag_v(v0) > mag_v(v1):
+    if mag_v(v0) < mag_v(v1):
         shortened = add_v(
             scale_v(norm_v(v1), mag_v(v0)),
-            near0
+            near1
         )
         far_distance = distance_v(far0, shortened)
     else:
         shortened = add_v(
             scale_v(norm_v(v0), mag_v(v1)),
-            near1
+            near0
         )
         far_distance = distance_v(far1, shortened)
 
@@ -179,7 +179,7 @@ def converging(near0, far0, near1, far1):
 def arc(t0, t1, c, side):
     converges = converging(
         (t0.x1, t0.y1), (t0.x0, t0.y0),
-        (t1.x0, t1.y0), (t1.x1, t1.y1)
+        (t1.x0, t1.y0), (t1.x1, t1.y1),
     )
 
     return Arc(
