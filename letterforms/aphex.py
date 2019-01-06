@@ -204,6 +204,7 @@ def draw_path(circles, sides):
 
     More specifically, sides[i] dictates how the path passes around circle[i].
     """
+    dwg = svgwrite.Drawing()
     tangents = [
         tangent(circles[i], circles[i+1], sides[i], sides[i+1])
         for i in range(len(circles) - 1)
@@ -223,13 +224,12 @@ def draw_path(circles, sides):
 
     path = ' '.join(path_commands)
 
-    dwg = svgwrite.Drawing('aphex.svg', profile='tiny')
-    dwg.add(dwg.path(path))
+    svg_elements = [ dwg.path(path) ]
 
     for circle in circles:
-        dwg.add(dwg.circle((circle.x, circle.y), circle.r, stroke='blue', fill_opacity=0))
+        svg_elements.append(dwg.circle((circle.x, circle.y), circle.r, stroke='blue', fill_opacity=0))
 
-    dwg.save()
+    return svg_elements
 
 def arm_circle(center, slope_v, length, radius):
     length_v = scale_v(norm_v(slope_v), length)
@@ -250,7 +250,7 @@ def draw_arms(center, positions):
     sides = []
 
     for (i, position) in enumerate(positions):
-        circles.append(arm_circle(center, slope_vector(position), 200, 30))
+        circles.append(arm_circle(center, slope_vector(position), 75, 10))
         sides.append(LEFT)
 
         # calculate armpit position
@@ -262,13 +262,13 @@ def draw_arms(center, positions):
             armpit = (delta / 2) + position
 
         if delta >= 180:
-            circles.append(arm_circle(center, (1, 0), 0, 50))
+            circles.append(arm_circle(center, (1, 0), 0, 15))
             sides.append(LEFT)
         else:
-            circles.append(arm_circle(center, slope_vector(armpit), 100, 10))
+            circles.append(arm_circle(center, slope_vector(armpit), 35, 5))
             sides.append(RIGHT)
 
-    draw_path(circles, sides)
+    return draw_path(circles, sides)
 
 def draw_original():
     circles = [
@@ -284,7 +284,7 @@ def draw_original():
     ]
 
     sides = [ RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, RIGHT, LEFT, RIGHT ]
-    draw_path(circles, sides)
+    return draw_path(circles, sides)
 
 def main():
     """
@@ -311,15 +311,18 @@ def main():
     - slight angle variation
     - arm complications
 
-
-    original (more or less):
-
     """
-    center = (400, 400)
-    draw_arms(center, [0, 120, 240])
-    #draw_arms(center, [72, 172, 219])
-    #draw_original()
+    scaling = 200
+    svg_elements = []
+    for center_y in range(scaling//2, scaling*4, scaling):
+        for center_x in range(scaling//2, scaling*7, scaling):
+            arms = [ random.randrange(0, 360, 10) for x in range(3) ]
+            svg_elements += draw_arms((center_x, center_y), sorted(arms))
 
+    dwg = svgwrite.Drawing('aphex.svg', profile='tiny')
+    for svg_element in svg_elements:
+        dwg.add(svg_element)
+    dwg.save()
 
 if __name__== "__main__":
     main()
