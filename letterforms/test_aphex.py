@@ -105,8 +105,9 @@ class TangentTest(unittest.TestCase):
         result = aphex.converging(tin1, tin0, tout0, tout1)
         self.assertTrue(result)
 
+class UtilTest(unittest.TestCase):
     def test_slope_vector(self):
-        angles = [
+        expected_vectors = [
             (0, (0.0, -1)),
             (45, (0.707106781186547, -0.707106781186548)),
             (90, (1.0, 0)),
@@ -116,8 +117,21 @@ class TangentTest(unittest.TestCase):
             (270, (-1.0, 0)),
             (315, (-0.707106781186548, -0.707106781186547)),
         ]
-        for (angle, expected) in angles:
+        for (angle, expected) in expected_vectors:
             self.assertEqual(aphex.slope_vector(angle), expected)
+
+    def test_spaced_out(self):
+        threshold = 20
+        tests = [
+            ([0, 120, 240], True),
+            ([0, 10, 20], False),
+            ([0, 60, 359], False),
+        ]
+        for (positions, expected) in tests:
+            self.assertEqual(
+                aphex.spaced_out(positions, threshold),
+                expected
+            )
 
 if __name__ == '__main__':
     unittest.main()

@@ -286,6 +286,49 @@ def draw_original():
     sides = [ RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, RIGHT, LEFT, RIGHT ]
     return draw_path(circles, sides)
 
+def spaced_out(arms, threshold):
+    """
+    Takes a list of arm positions (in degrees from 0 to 359) and tests whether
+    any are less than threshold degrees apart.
+    """
+
+    # check every triple in the list
+    wrapped_list = arms + arms[-2:] + arms[0:1] + arms[-1:] + arms[:2]
+    for i in range(0, len(wrapped_list) - 2, 3):
+        (prev, this, nxt) = wrapped_list[i:i+3]
+
+        if prev > this:
+            this += 360
+        if this > nxt:
+            nxt += 360
+
+        if ((this - prev) < threshold) or ((nxt - this) < threshold):
+            return False
+
+    return True
+
+def arm_positions():
+    threshold = 45
+    positions = [ random.randrange(0, 360) ]
+
+    # make a second arm that is spaced out enough
+    while True:
+        new = sorted(positions + [ random.randrange(0, 360) ])
+        if ((new[1] - new[0]) > threshold) and \
+            (((new[0] + 360) - new[1]) > threshold):
+            positions = new
+            break
+
+    # add a third arm that is spaced out enough
+    while True:
+        new = sorted(positions + [ random.randrange(0, 360) ])
+        if spaced_out(new, threshold):
+            positions = new
+            break
+
+    return positions
+
+
 def main():
     """
     inspiration:
@@ -316,8 +359,7 @@ def main():
     svg_elements = []
     for center_y in range(scaling//2, scaling*4, scaling):
         for center_x in range(scaling//2, scaling*7, scaling):
-            arms = [ random.randrange(0, 360, 10) for x in range(3) ]
-            svg_elements += draw_arms((center_x, center_y), sorted(arms))
+            svg_elements += draw_arms((center_x, center_y), arm_positions())
 
     dwg = svgwrite.Drawing('aphex.svg', profile='tiny')
     for svg_element in svg_elements:
