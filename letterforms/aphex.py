@@ -226,22 +226,28 @@ def draw_path(circles, sides):
 
     svg_elements = [ dwg.path(path) ]
 
-    for circle in circles:
-        svg_elements.append(dwg.circle((circle.x, circle.y), circle.r, stroke='blue', fill_opacity=0))
+    #for circle in circles:
+    #    svg_elements.append(dwg.circle((circle.x, circle.y), circle.r, stroke='blue', fill_opacity=0))
 
     return svg_elements
 
-def arm_circle(center, slope_v, length, radius):
-    length_v = scale_v(norm_v(slope_v), length)
-    total_v = add_v(length_v, center)
+def arm_circle(origin, angle, along_axis, radius, off_axis):
+    slope_v = slope_vector(angle)
+    perp_v = slope_vector(angle, perpendicular=True)
+    along_axis_v = scale_v(norm_v(slope_v), along_axis)
+    off_axis_v = scale_v(norm_v(perp_v), off_axis)
+    sum_v = add_v(add_v(along_axis_v, origin), off_axis_v)
 
-    return Circle(total_v[0], total_v[1], radius)
+    return Circle(sum_v[0], sum_v[1], radius)
 
-def slope_vector(degrees):
+def slope_vector(degrees, perpendicular=False):
     rad = math.radians(degrees)
-    return (round(math.sin(rad), 15), -round(math.cos(rad), 15))
+    if perpendicular:
+        return (round(math.cos(rad), 15), round(math.sin(rad), 15))
+    else:
+        return (round(math.sin(rad), 15), -round(math.cos(rad), 15))
 
-def draw_arms(center, positions):
+def draw_arms(center):
     """
     Draws an arm at ever position specified in positions.  Each position
     is an angle in degrees (0-359) clockwise from 12 o'clock.
@@ -249,8 +255,9 @@ def draw_arms(center, positions):
     circles = []
     sides = []
 
+    positions = arm_positions()
     for (i, position) in enumerate(positions):
-        circles.append(arm_circle(center, slope_vector(position), 75, 10))
+        circles.append(arm_circle(center, position, 75, 10, 0))
         sides.append(LEFT)
 
         # calculate armpit position
@@ -262,10 +269,10 @@ def draw_arms(center, positions):
             armpit = (delta / 2) + position
 
         if delta >= 180:
-            circles.append(arm_circle(center, (1, 0), 0, 15))
+            circles.append(arm_circle(center, 0, 0, 15, 0))
             sides.append(LEFT)
         else:
-            circles.append(arm_circle(center, slope_vector(armpit), 35, 5))
+            circles.append(arm_circle(center, position, 25, 5, 5))
             sides.append(RIGHT)
 
     return draw_path(circles, sides)
@@ -308,26 +315,15 @@ def spaced_out(arms, threshold):
     return True
 
 def arm_positions():
-    threshold = 45
-    positions = [ random.randrange(0, 360) ]
+    if random.random() < .5:
+        angles = [ 0, 60, 120, 180, 240, 300, 0, 60 ]
+    else:
+        angles = [ 30, 90, 150, 210, 270, 330, 30, 90 ]
 
-    # make a second arm that is spaced out enough
-    while True:
-        new = sorted(positions + [ random.randrange(0, 360) ])
-        if ((new[1] - new[0]) > threshold) and \
-            (((new[0] + 360) - new[1]) > threshold):
-            positions = new
-            break
+    i = random.randrange(6)
 
-    # add a third arm that is spaced out enough
-    while True:
-        new = sorted(positions + [ random.randrange(0, 360) ])
-        if spaced_out(new, threshold):
-            positions = new
-            break
-
-    return positions
-
+    # angles repeats first two so don't overflow if 4 or 5 are chosen
+    return angles[i:i+3]
 
 def main():
     """
@@ -359,7 +355,7 @@ def main():
     svg_elements = []
     for center_y in range(scaling//2, scaling*4, scaling):
         for center_x in range(scaling//2, scaling*7, scaling):
-            svg_elements += draw_arms((center_x, center_y), arm_positions())
+            svg_elements += draw_arms((center_x, center_y))
 
     dwg = svgwrite.Drawing('aphex.svg', profile='tiny')
     for svg_element in svg_elements:

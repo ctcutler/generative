@@ -120,6 +120,21 @@ class UtilTest(unittest.TestCase):
         for (angle, expected) in expected_vectors:
             self.assertEqual(aphex.slope_vector(angle), expected)
 
+    def test_perp_slope_vector(self):
+        expected_vectors = [
+            (0, (1.0, 0)),
+            (45, (0.707106781186548, 0.707106781186547)),
+            (90, (0.0, 1)),
+            (135, (-0.707106781186547, 0.707106781186548)),
+            (180, (-1.0, 0)),
+            (225, (-0.707106781186548, -0.707106781186547)),
+            (270, (0.0, -1)),
+            (315, (0.707106781186547, -0.707106781186548)),
+        ]
+        for (angle, expected) in expected_vectors:
+            actual = aphex.slope_vector(angle, True)
+            self.assertEqual(actual, expected)
+
     def test_spaced_out(self):
         threshold = 20
         tests = [
