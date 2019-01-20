@@ -247,6 +247,14 @@ def slope_vector(degrees, perpendicular=False):
     else:
         return (round(math.sin(rad), 15), -round(math.cos(rad), 15))
 
+def compute_center(circles):
+    n = len(circles)
+    sum_v = (0, 0)
+    for circle in circles:
+        sum_v = add_v(sum_v, (circle.x, circle.y))
+
+    return (sum_v[0] / n, sum_v[1] / n)
+
 def draw_arms(center):
     circles = []
     sides = []
@@ -255,11 +263,11 @@ def draw_arms(center):
     for (i, position) in enumerate(positions):
         # arm tip
         radius = random.randrange(5, 16)
-        along_axis = random.randrange(50, 101)
+        along_axis = random.randrange(50, 91)
         circles.append(arm_circle(center, position, along_axis, radius, 0))
         sides.append(LEFT)
 
-        # calculate delt between positions
+        # calculate delta between positions
         if i + 1 == len(positions):
             delta = positions[0] +  (360 - position)
         else:
@@ -274,7 +282,16 @@ def draw_arms(center):
             circles.append(arm_circle(center, position, 25, 5, 5))
             sides.append(RIGHT)
 
-    return draw_path(circles, sides)
+
+    new_center = compute_center(circles)
+    delta = sub_v(center, new_center)
+
+    shifted_circles = [
+        Circle(c.x + delta[0], c.y + delta[1], c.r)
+        for c in circles
+    ]
+
+    return draw_path(shifted_circles, sides)
 
 def draw_original():
     circles = [
@@ -342,18 +359,12 @@ def main():
     - find a point on an axis
     - find a point n units perpendicularly off the axis
 
-    to do:
-    X 3 arms, all the same length and width
-    - random arms
-    - random lengths and widths
-    - slight angle variation
-    - arm complications
-
-
     things to try:
-    - "center" letterforms
-    - vary the tip size
+    x vary the tip size
+    x vary the arm length
+    x "center" letterforms
     - add variations on sides of arms
+    - two or three arms
     """
     scaling = 200
     svg_elements = []

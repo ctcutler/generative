@@ -148,5 +148,37 @@ class UtilTest(unittest.TestCase):
                 expected
             )
 
+    def test_compute_center(self):
+        tests = [
+            (
+                [
+                    aphex.Circle(0, 0, 4),
+                    aphex.Circle(5, 5, 3),
+                ],
+                (2.5, 2.5)
+            ),
+            (
+                [
+                    aphex.Circle(0, 0, 3),
+                    aphex.Circle(5, 5, 3),
+                    aphex.Circle(-5, -5, 3),
+                ],
+                (0, 0)
+            ),
+            (
+                [
+                    aphex.Circle(0, 0, 3),
+                    aphex.Circle(6, 5, 3),
+                    aphex.Circle(0, 1, 3),
+                ],
+                (2, 2)
+            ),
+        ]
+        for (circles, expected) in tests:
+            self.assertEqual(
+                aphex.compute_center(circles),
+                expected
+            )
+
 if __name__ == '__main__':
     unittest.main()
