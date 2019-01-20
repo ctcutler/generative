@@ -350,6 +350,11 @@ def main():
     - slight angle variation
     - arm complications
 
+
+    things to try:
+    - "center" letterforms
+    - vary the tip size
+    - add variations on sides of arms
     """
     scaling = 200
     svg_elements = []
@@ -357,7 +362,7 @@ def main():
         for center_x in range(scaling//2, scaling*7, scaling):
             svg_elements += draw_arms((center_x, center_y))
 
-    dwg = svgwrite.Drawing('aphex.svg', profile='tiny')
+    dwg = svgwrite.Drawing('aphex.svg', profile='tiny', viewBox=('0 0 2100 1200'))
     for svg_element in svg_elements:
         dwg.add(svg_element)
     dwg.save()
