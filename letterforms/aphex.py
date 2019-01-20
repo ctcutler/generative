@@ -362,7 +362,7 @@ def main():
         for center_x in range(scaling//2, scaling*7, scaling):
             svg_elements += draw_arms((center_x, center_y))
 
-    dwg = svgwrite.Drawing('aphex.svg', profile='tiny', viewBox=('0 0 2100 1200'))
+    dwg = svgwrite.Drawing('aphex.svg', profile='tiny', viewBox=('0 0 1400 800'))
     for svg_element in svg_elements:
         dwg.add(svg_element)
     dwg.save()
