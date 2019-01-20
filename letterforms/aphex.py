@@ -248,30 +248,29 @@ def slope_vector(degrees, perpendicular=False):
         return (round(math.sin(rad), 15), -round(math.cos(rad), 15))
 
 def draw_arms(center):
-    """
-    Draws an arm at ever position specified in positions.  Each position
-    is an angle in degrees (0-359) clockwise from 12 o'clock.
-    """
     circles = []
     sides = []
 
     positions = arm_positions()
     for (i, position) in enumerate(positions):
-        circles.append(arm_circle(center, position, 75, 10, 0))
+        # arm tip
+        radius = random.randrange(5, 16)
+        along_axis = random.randrange(50, 101)
+        circles.append(arm_circle(center, position, along_axis, radius, 0))
         sides.append(LEFT)
 
-        # calculate armpit position
+        # calculate delt between positions
         if i + 1 == len(positions):
             delta = positions[0] +  (360 - position)
-            armpit = ((delta / 2) + position) % 360
         else:
             delta = positions[i+1] - position
-            armpit = (delta / 2) + position
 
         if delta >= 180:
+            # central circle
             circles.append(arm_circle(center, 0, 0, 15, 0))
             sides.append(LEFT)
         else:
+            # armpit
             circles.append(arm_circle(center, position, 25, 5, 5))
             sides.append(RIGHT)
 
