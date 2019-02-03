@@ -11,6 +11,10 @@ Arc = collections.namedtuple('Arc', ['x0', 'y0', 'x1', 'y1', 'r', 'a', 'l', 's']
 LEFT = 'left'
 RIGHT = 'right'
 
+SIMPLE = 'simple'
+CYLINDRICAL = 'cylindrical'
+ARM_TYPES = [SIMPLE, CYLINDRICAL]
+
 def mag_v(v):
     return math.sqrt(v[0]**2 + v[1]**2)
 
@@ -231,6 +235,15 @@ def draw_path(circles, sides):
 
     return svg_elements
 
+def just_draw_circles(circles):
+    dwg = svgwrite.Drawing()
+    svg_elements = []
+
+    for circle in circles:
+        svg_elements.append(dwg.circle((circle.x, circle.y), circle.r, stroke='blue', fill_opacity=0))
+
+    return svg_elements
+
 def arm_circle(origin, angle, along_axis, radius, off_axis):
     slope_v = slope_vector(angle)
     perp_v = slope_vector(angle, perpendicular=True)
@@ -261,11 +274,19 @@ def draw_arms(center):
 
     positions = arm_positions()
     for (i, position) in enumerate(positions):
+        arm_type = random.choice(ARM_TYPES)
+
         # arm tip
         radius = random.randrange(5, 16)
-        along_axis = random.randrange(50, 91)
+        along_axis = random.randrange(60, 101)
         circles.append(arm_circle(center, position, along_axis, radius, 0))
         sides.append(LEFT)
+
+        if arm_type == CYLINDRICAL:
+            along_axis *= .85
+            # cylinder end is running into armpit
+            circles.append(arm_circle(center, position, along_axis, radius, 0))
+            sides.append(LEFT)
 
         # calculate delta between positions
         if i + 1 == len(positions):
@@ -292,6 +313,7 @@ def draw_arms(center):
     ]
 
     return draw_path(shifted_circles, sides)
+    #return just_draw_circles(shifted_circles)
 
 def draw_original():
     circles = [
