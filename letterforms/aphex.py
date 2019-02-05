@@ -13,7 +13,8 @@ RIGHT = 'right'
 
 SIMPLE = 'simple'
 CYLINDRICAL = 'cylindrical'
-ARM_TYPES = [SIMPLE, CYLINDRICAL]
+LUMPY = 'lumpy'
+ARM_TYPES = [SIMPLE, CYLINDRICAL, LUMPY]
 
 def mag_v(v):
     return math.sqrt(v[0]**2 + v[1]**2)
@@ -230,8 +231,8 @@ def draw_path(circles, sides):
 
     svg_elements = [ dwg.path(path) ]
 
-    #for circle in circles:
-    #    svg_elements.append(dwg.circle((circle.x, circle.y), circle.r, stroke='blue', fill_opacity=0))
+    for circle in circles:
+        svg_elements.append(dwg.circle((circle.x, circle.y), circle.r, stroke='blue', fill_opacity=0))
 
     return svg_elements
 
@@ -271,22 +272,36 @@ def compute_center(circles):
 def draw_arms(center):
     circles = []
     sides = []
+    tip_radius = 10
+    pit_radius = 5
+    arm_length = random.randrange(60, 101)
+    pit_length = .25 * arm_length
+    cylinder_start = .65 * arm_length
 
     positions = arm_positions()
     for (i, position) in enumerate(positions):
         arm_type = random.choice(ARM_TYPES)
 
+        if arm_type == CYLINDRICAL:
+            cylinder_circle = arm_circle(
+              center, position, cylinder_start, tip_radius, 0
+            )
+            circles.append(cylinder_circle)
+            sides.append(LEFT)
+
         # arm tip
-        radius = random.randrange(5, 16)
-        along_axis = random.randrange(60, 101)
-        circles.append(arm_circle(center, position, along_axis, radius, 0))
+        circles.append(arm_circle(center, position, arm_length, tip_radius, 0))
         sides.append(LEFT)
 
         if arm_type == CYLINDRICAL:
-            along_axis *= .85
-            # cylinder end is running into armpit
-            circles.append(arm_circle(center, position, along_axis, radius, 0))
+            circles.append(cylinder_circle)
             sides.append(LEFT)
+        elif arm_type == LUMPY:
+            # use a 3-4-5 right triangle to make the circles touch?
+            #circles.append(arm_circle(center, position, ???, ???, ???))
+            #circles.append(arm_circle(center, position, ???, ???, ???))
+            #sides += [LEFT, RIGHT]
+            pass
 
         # calculate delta between positions
         if i + 1 == len(positions):
@@ -300,7 +315,10 @@ def draw_arms(center):
             sides.append(LEFT)
         else:
             # armpit
-            circles.append(arm_circle(center, position, 25, 5, 5))
+            pit_circle = arm_circle(
+              center, position, pit_length, pit_radius, 5
+            )
+            circles.append(pit_circle)
             sides.append(RIGHT)
 
 
