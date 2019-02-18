@@ -19,21 +19,61 @@ def draw_line(canvas, position, line):
 
     return c
 
+def make_line(height, seed):
+    # in addition to experimenting with how quickly the sides fade out,
+    # play with how close the middle is to one side or the other
+
+    return np.tile(seed, height).reshape(height, 5, 3)
+
 def main():
     SCALE = 85
     IMAGE_WIDTH = 16 * SCALE
     IMAGE_HEIGHT = 9 * SCALE
     MARGIN = int(SCALE / 2)
     WHITE = np.array((255, 255, 255))
-    BLACK = np.array((0, 0, 0))
     LINE_WIDTH = 5
 
-    solid = init_solid(IMAGE_WIDTH, IMAGE_HEIGHT, WHITE)
+    HARD = np.array((
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+    ))
+
+    SOFT1 = np.array((
+        64, 64, 64,
+        32, 32, 32,
+        0, 0, 0,
+        32, 32, 32,
+        64, 64, 64,
+    ))
+
+    SOFT2 = np.array((
+        128, 128, 128,
+        64, 64, 64,
+        0, 0, 0,
+        64, 64, 64,
+        128, 128, 128,
+    ))
+
+    SOFT3 = np.array((
+        192, 192, 192,
+        96, 96, 96,
+        0, 0, 0,
+        96, 96, 96,
+        192, 192, 192,
+    ))
+
+    line = init_solid(IMAGE_WIDTH, IMAGE_HEIGHT, WHITE)
     height = IMAGE_HEIGHT - (MARGIN * 2)
-    line_flat = np.tile(BLACK, LINE_WIDTH * height)
-    line = line_flat.reshape(height, LINE_WIDTH, BLACK.size)
-    first_line = draw_line(solid, (MARGIN, MARGIN), line)
-    save_image('sl.png', first_line)
+
+    for (i, line_seed) in enumerate([HARD, SOFT1, SOFT2, SOFT3]):
+        line = draw_line(
+            line, (MARGIN, (MARGIN * (i+1)) + (5 * i)),
+            make_line(height, line_seed)
+        )
+    save_image('sl.png', line)
 
 if __name__== "__main__":
     main()
