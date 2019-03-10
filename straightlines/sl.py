@@ -46,10 +46,55 @@ def make_line(height, seed):
 
     return line
 
+def make_line2(height):
+    GRAY_128 = np.array((128, 128, 128))
+    GRAY_192 = np.array((192, 192, 192))
+    WHITE = np.array((255, 255, 255))
+    BLACK = np.array((0, 0, 0))
+    offsets = random_walk(.1, height, 0, 2, 0)
+    canvas = np.tile(WHITE, height * 5).reshape(height, 5, 3)
+    prev = 0
+    for i in range(height):
+        offset = offsets[i]
+        canvas[i][offset] = BLACK
+        if offset != prev:
+            canvas[i][prev] = GRAY_128
+            canvas[i+1][prev] = GRAY_192
+            canvas[i-1][offset] = GRAY_128
+            canvas[i-2][offset] = GRAY_192
+        prev = offset
+
+    return canvas
+
+def make_line3(height):
+    GRAY_128 = np.array((128, 128, 128))
+    GRAY_192 = np.array((192, 192, 192))
+    WHITE = np.array((255, 255, 255))
+    BLACK = np.array((0, 0, 0))
+    offsets = random_walk(.8, height, 0, 1, 0)
+    canvas = np.tile(WHITE, height * 3).reshape(height, 3, 3)
+    prev = 0
+    for i in range(height):
+        offset = offsets[i]
+        canvas[i][offset] = BLACK
+        if offset != prev:
+            canvas[i][prev] = GRAY_128
+            canvas[i+1][prev] = GRAY_192
+            canvas[i-1][offset] = GRAY_128
+            canvas[i-2][offset] = GRAY_192
+        prev = offset
+
+    return canvas
+
 def main():
-    SCALE = 85
-    IMAGE_WIDTH = 16 * SCALE
-    IMAGE_HEIGHT = 9 * SCALE
+    # macbook air screen resolution: 128 dpi
+    # cheap-ish laser printer resolution: 600 dpi
+    # printer has 4.6825x the resolution
+
+    #SCALE = 85
+    SCALE = 100 * 4.6825
+    IMAGE_WIDTH = int(16 * SCALE)
+    IMAGE_HEIGHT = int(9 * SCALE)
     MARGIN = int(SCALE / 2)
     WHITE = np.array((255, 255, 255))
     LINE_WIDTH = 5
@@ -134,16 +179,27 @@ def main():
         255, 255, 255,
     ))
 
-    line = init_solid(IMAGE_WIDTH, IMAGE_HEIGHT, WHITE)
+    canvas = init_solid(IMAGE_WIDTH, IMAGE_HEIGHT, WHITE)
     height = IMAGE_HEIGHT - (MARGIN * 2)
 
-    for (i, line_seed) in enumerate([HARD, SOFT1, SOFT2, SOFT3, SOFT_LEFT1, SOFT_LEFT2,
-        SOFT_LEFT3, SKINNY1, SKINNY2, SKINNY3]):
-        line = draw_line(
-            line, (MARGIN, (MARGIN * (i+1)) + (5 * i)),
+    seeds = [HARD, SOFT1, SOFT2, SOFT3, SOFT_LEFT1, SOFT_LEFT2, SOFT_LEFT3, SKINNY1,
+        SKINNY2, SKINNY3]
+    for (i, line_seed) in enumerate(seeds):
+        canvas = draw_line(
+            canvas, (MARGIN, (MARGIN * (i+1)) + (5 * i)),
             make_line(height, line_seed)
         )
-    save_image('sl.png', line)
+
+    i = len(seeds)
+    canvas = draw_line(canvas, (MARGIN, (MARGIN * (i+1)) + (5 * i)), make_line2(height))
+
+    i += 1
+    canvas = draw_line(canvas, (MARGIN, (MARGIN * (i+1)) + (5 * i)), make_line3(height))
+
+
+
+
+    save_image('sl.png', canvas)
 
 if __name__== "__main__":
     main()
